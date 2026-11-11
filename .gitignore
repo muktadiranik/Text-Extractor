@@ -1,0 +1,4 @@
+.venv/
+.venv-win/
+__pycache__/
+/ocr-sample.png
