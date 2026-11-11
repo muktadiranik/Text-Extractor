@@ -1,6 +1,6 @@
 # Camera Number Reader
 
-Read printed English text, one group of 1–6 printed or handwritten digits, or a phone number in the format `01234-567890`. Center the text or number in the yellow box and hold it steady. The preview displays the result after two consecutive matching samples. Leading zeros and the phone number's hyphen are preserved. With the preview focused, press **Q** to quit.
+Read printed English text, or a phone number in the format `01234-567890`. Center the text or number in the yellow box and hold it steady. The preview displays the result after two consecutive matching samples. Leading zeros and the phone number's hyphen are preserved. With the preview focused, press **Q** to quit.
 
 If a visible number is missed, press **S** with the preview focused. This saves only the area inside the yellow box to `ocr-sample.png` in the project folder, replacing the previous sample. You can pass that file to `--image` to test the same crop.
 
