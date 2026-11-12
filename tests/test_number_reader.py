@@ -43,23 +43,25 @@ class ImageModeTests(unittest.TestCase):
             ("1", "1"),
             ("123456", "123456"),
             ("42   007", NO_NUMBER),
-            ("1234567", NO_NUMBER),
+            ("1234567", "1234567"),
             ("A42", "A42"),
             ("01234-567890", "01234-567890"),
-            ("01234567890", NO_NUMBER),
+            ("01234567890", "01234567890"),
+            ("001234567890123456789012345678", "001234567890123456789012345678"),
         ]
         with TemporaryDirectory() as directory:
             for index, (sample, expected) in enumerate(samples):
                 with self.subTest(sample=sample):
                     path = Path(directory) / f"sample-{index}.png"
-                    image = np.full((240, 640, 3), 255, dtype=np.uint8)
+                    image_width = max(640, 54 * len(sample))
+                    image = np.full((240, image_width, 3), 255, dtype=np.uint8)
                     if sample:
                         if len(sample) >= 11:
                             font, scale, stroke = cv2.FONT_HERSHEY_DUPLEX, 2, 4
                         else:
                             font, scale, stroke = cv2.FONT_HERSHEY_SIMPLEX, 3, 6
                         (width, _), _ = cv2.getTextSize(sample, font, scale, stroke)
-                        origin = ((640 - width) // 2, 150)
+                        origin = ((image_width - width) // 2, 150)
                         cv2.putText(image, sample, origin, font, scale, (0, 0, 0), stroke)
                     encoded, png = cv2.imencode(".png", image)
                     self.assertTrue(encoded)
@@ -115,14 +117,16 @@ class ImageModeTests(unittest.TestCase):
             self.assertIn("Install Tesseract OCR", result.stderr)
 
     def test_default_launch_reads_pen_strokes(self) -> None:
-        cases = [("0057", "0057"), ("000007", "000007"), ("0000007", NO_NUMBER), ("", NO_NUMBER)]
+        sequences = ("0057", "000007", "0000007", "005707500570750057075")
+        cases = [(sequence, sequence) for sequence in sequences] + [("", NO_NUMBER)]
         with TemporaryDirectory() as directory:
             path = Path(directory) / "handwritten.png"
             for sample, expected in cases:
                 with self.subTest(sample=sample):
-                    image = np.full((168, 448, 3), 65, dtype=np.uint8)
-                    image[34:137, 35:412] = 245
-                    left = (448 - 47 * len(sample)) // 2
+                    image_width = max(448, 47 * len(sample) + 80)
+                    image = np.full((168, image_width, 3), 65, dtype=np.uint8)
+                    image[34:137, 35:-36] = 245
+                    left = (image_width - 47 * len(sample)) // 2
                     for digit in sample:
                         for stroke in PEN_STROKES[digit]:
                             points = np.asarray(stroke, dtype=np.int32)
@@ -198,7 +202,7 @@ class CameraCropTests(unittest.TestCase):
                 self.assertEqual(read_content(self.camera_crop(text, scene)), text)
 
     def test_rejects_blank_cards_and_invalid_groups(self) -> None:
-        for text in ("", "42   07", "1234567"):
+        for text in ("", "42   07"):
             with self.subTest(text=text):
                 self.assertIsNone(read_content(self.camera_crop(text, "clutter")))
 

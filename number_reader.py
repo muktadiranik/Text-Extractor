@@ -28,7 +28,7 @@ READING_MAX_AGE = 2.0
 MIN_CONFIDENCE = 65
 MIN_TEXT_CONFIDENCE = 80
 MIN_SINGLE_LETTER_CONFIDENCE = 95
-DIGITS = re.compile(r"[0-9]{1,6}")
+DIGITS = re.compile(r"[0-9]+")
 PHONE_NUMBER = re.compile(r"([0-9]{5})\s*[-‐‑–—−]\s*([0-9]{6})")
 SAMPLE_PATH = Path(__file__).with_name("ocr-sample.png")
 HANDWRITING_MODEL = Path(__file__).with_name("models") / "mnist-8.onnx"
@@ -73,7 +73,8 @@ def normalize_ink(ink: np.ndarray) -> np.ndarray | None:
         return None
 
     cropped = cv2.bitwise_not(ink[y : y + height, x : x + width])
-    scale = min(80 / height, 960 / width)
+    # Limit upscaling without shrinking a long row to fit a fixed width.
+    scale = min(80 / height, max(1, 960 / width))
     interpolation = cv2.INTER_CUBIC if scale > 1 else cv2.INTER_AREA
     resized = cv2.resize(
         cropped,
@@ -293,11 +294,13 @@ def read_content(image: np.ndarray, *, handwriting: "HandwrittenReader | None" =
                 return None
             if phones and phones[0][1] >= MIN_CONFIDENCE:
                 return phones[0][0]
+            if mode == 11 and number is None:
+                number = parse_single_number(recognized_words)
             if read_text and text is None:
                 text = parse_text(recognized_words)
                 if text is not None and light_background:
-                    return text
-        return text or agreed_text or handwritten or parse_text(alternate_words) or parse_text(words)
+                    return number or text
+        return number or text or agreed_text or handwritten or parse_text(alternate_words) or parse_text(words)
     except pytesseract.TesseractError as exc:
         raise ReaderError(f"Tesseract could not read the image: {exc}") from exc
 
@@ -353,7 +356,7 @@ class HandwrittenReader:
 
     def read_ink(self, ink: np.ndarray) -> str | None:
         boxes = digit_boxes(ink)
-        if not 1 <= len(boxes) <= 6:
+        if not boxes:
             return None
 
         max_height = max(bottom - top for _, top, _, bottom in boxes)

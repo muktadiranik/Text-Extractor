@@ -1,12 +1,12 @@
 # Camera Number Reader
 
-Read printed English text, or a phone number in the format `01234-567890`. Center the text or number in the yellow box and hold it steady. The preview displays the result after two consecutive matching samples. Leading zeros and the phone number's hyphen are preserved. With the preview focused, press **Q** to quit.
+Read printed English text, a single row of printed or handwritten digits, or a phone number in the format `01234-567890`. Center the text or number in the yellow box and hold it steady. The preview displays the result after two consecutive matching samples. Leading zeros and the phone number's hyphen are preserved. With the preview focused, press **Q** to quit.
 
 If a visible number is missed, press **S** with the preview focused. This saves only the area inside the yellow box to `ocr-sample.png` in the project folder, replacing the previous sample. You can pass that file to `--image` to test the same crop.
 
 ## Handwritten digits
 
-Launch the app normally to read handwriting. Write in dark ink on light paper and leave a visible gap between digits. The app uses the bundled MNIST model through OpenCV when Tesseract misses the digits. Both readers run locally. [ONNX Model Zoo MNIST model](https://github.com/onnx/models/tree/main/validated/vision/classification/mnist)
+Launch the app normally to read handwriting. Write in dark ink on light paper and leave a visible gap between digits. Digit sequences have no fixed length limit. Keep the whole row visible and each digit clear enough for the camera to read. The app uses the bundled MNIST model through OpenCV when Tesseract misses the digits. Both readers run locally. [ONNX Model Zoo MNIST model](https://github.com/onnx/models/tree/main/validated/vision/classification/mnist)
 
 For handwritten text, write separate block letters. The app can enhance faint pencil strokes before running Tesseract.
 
